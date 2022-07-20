@@ -34,7 +34,7 @@ func Benchmark_TamperedInterfaceByName(b *testing.B) {
 	}
 }
 
-func Benchmar_NetInterfaceByName(b *testing.B) {
+func Benchmark_NetInterfaceByName(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		net.InterfaceByName("eth0")
 	}
