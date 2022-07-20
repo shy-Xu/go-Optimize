@@ -22,14 +22,18 @@ loop:
 		case syscall.NLMSG_DONE:
 			break loop
 		case syscall.RTM_NEWLINK:
-			ifim := (*syscall.IfInfomsg)(unsafe.Pointer(&m.Data[0]))
 			attrs, err := syscall.ParseNetlinkRouteAttr(&m)
 			if err != nil {
 				return nil, os.NewSyscallError("parsenetlinkrouteattr", err)
 			}
-			ift := newLink(ifim, attrs)
-			if name == ift.Name {
-				return ift, nil
+			for _, a := range attrs {
+				if a.Attr.Type == syscall.IFLA_IFNAME {
+					if string(a.Value[:len(a.Value)-1]) == name {
+						return newLink((*syscall.IfInfomsg)(unsafe.Pointer(&m.Data[0])), attrs), nil
+					} else {
+						break
+					}
+				}
 			}
 		}
 	}
