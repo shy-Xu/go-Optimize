@@ -22,22 +22,57 @@ loop:
 		case syscall.NLMSG_DONE:
 			break loop
 		case syscall.RTM_NEWLINK:
-			attrs, err := syscall.ParseNetlinkRouteAttr(&m)
-			if err != nil {
-				return nil, os.NewSyscallError("parsenetlinkrouteattr", err)
-			}
-			for _, a := range attrs {
-				if a.Attr.Type == syscall.IFLA_IFNAME {
-					if string(a.Value[:len(a.Value)-1]) == name {
-						return newLink((*syscall.IfInfomsg)(unsafe.Pointer(&m.Data[0])), attrs), nil
-					} else {
-						break
-					}
+			if nameIsEqual(name, &m) {
+				attrs, err := syscall.ParseNetlinkRouteAttr(&m)
+				if err != nil {
+					return nil, os.NewSyscallError("parsenetlinkrouteattr", err)
 				}
+				return newLink((*syscall.IfInfomsg)(unsafe.Pointer(&m.Data[0])), attrs), nil
 			}
 		}
 	}
 	return nil, nil
+}
+
+func nameIsEqual(name string, m *syscall.NetlinkMessage) bool {
+	var b []byte
+	switch m.Header.Type {
+	case syscall.RTM_NEWLINK, syscall.RTM_DELLINK:
+		b = m.Data[syscall.SizeofIfInfomsg:]
+	case syscall.RTM_NEWADDR, syscall.RTM_DELADDR:
+		b = m.Data[syscall.SizeofIfAddrmsg:]
+	case syscall.RTM_NEWROUTE, syscall.RTM_DELROUTE:
+		b = m.Data[syscall.SizeofRtMsg:]
+	default:
+		return false
+	}
+	for len(b) >= syscall.SizeofRtAttr {
+		a, vbuf, alen, err := netlinkRouteAttrAndValue(b)
+		if err != nil {
+			return false
+		}
+		if a.Type == syscall.IFLA_IFNAME {
+			if string(vbuf[:int(a.Len)-syscall.SizeofRtAttr-1]) == name {
+				return true
+			} else {
+				return false
+			}
+		}
+		b = b[alen:]
+	}
+	return false
+}
+
+func netlinkRouteAttrAndValue(b []byte) (*syscall.RtAttr, []byte, int, error) {
+	a := (*syscall.RtAttr)(unsafe.Pointer(&b[0]))
+	if int(a.Len) < syscall.SizeofRtAttr || int(a.Len) > len(b) {
+		return nil, nil, 0, syscall.EINVAL
+	}
+	return a, b[syscall.SizeofRtAttr:], rtaAlignOf(int(a.Len)), nil
+}
+
+func rtaAlignOf(attrlen int) int {
+	return (attrlen + syscall.RTA_ALIGNTO - 1) & ^(syscall.RTA_ALIGNTO - 1)
 }
 
 const (

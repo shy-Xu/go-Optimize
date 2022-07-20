@@ -8,17 +8,17 @@ import (
 )
 
 // go test -bench=InterfaceBy -benchmem -run=none
-// optimize: 20% memory 5% CPU from output
+// optimize: 28% memory 3% CPU from output
 /*
 goos: linux
 goarch: amd64
 pkg: go-optimize/netTamper
 cpu: Intel(R) Xeon(R) CPU E5-2680 v4 @ 2.40GHz
-Benchmark_TamperedInterfaceByName-4   	    6182	    188662 ns/op	   18084 B/op	      32 allocs/op
-Benchmark_NetInterfaceByName-4        	    5757	    193950 ns/op	   22840 B/op	      54 allocs/op
-Benchmark_NetInterfaceByIndex-4       	    6046	    187412 ns/op	   16196 B/op	      28 allocs/op
+Benchmark_TamperedInterfaceByName-4   	    6092	    187719 ns/op	   16068 B/op	      26 allocs/op
+Benchmark_NetInterfaceByName-4        	    5724	    194584 ns/op	   22840 B/op	      54 allocs/op
+Benchmark_NetInterfaceByIndex-4       	    6252	    187021 ns/op	   16196 B/op	      28 allocs/op
 PASS
-ok  	go-optimize/netTamper	3.487s
+ok  	go-optimize/netTamper	3.498s
 */
 
 func Test_TamperedInterfaceByName(t *testing.T) {
@@ -26,7 +26,7 @@ func Test_TamperedInterfaceByName(t *testing.T) {
 	assert.Nil(t, err)
 	expect, err := net.InterfaceByName("eth0")
 	assert.Nil(t, err)
-	assert.Equal(t, res, expect)
+	assert.Equal(t, expect, res)
 }
 
 func Benchmark_TamperedInterfaceByName(b *testing.B) {
