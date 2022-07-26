@@ -1,8 +1,8 @@
 # go-optimize
-  optimize some offical package of golang
+> optimize some offical package of golang
 
 ## Usage of testflag
--test.bench regexp
+>  -test.bench regexp
         run only benchmarks matching regexp
   -test.benchmem
         print memory allocations for benchmarks
